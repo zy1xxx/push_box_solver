@@ -11,5 +11,7 @@ the first line means the height and width of the map.
 - p means player
 
 ![map](./map.png)
+
 2. execute the .exe file,the program will show the solution for it.
-![map](./result.png)
+
+![map](./result.png){:height="50%" width="50%"}
