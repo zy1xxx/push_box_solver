@@ -1,4 +1,4 @@
-﻿#include <graphics.h>		// 引用图形库头文件
+#include <graphics.h>		// 引用图形库头文件
 #include <conio.h>
 #include <windows.h>
 #include <fstream>
@@ -121,7 +121,57 @@ State end_state;
 int** map_matrix;
 vector<Pos> wall_pos;
 vector<Pos> des_pos;
+int box_width = 64;
+IMAGE player, wall, box, des;
 
+void draw(vector<State> &searched,int i) {
+	cleardevice();
+	wchar_t s[] = L"求解完毕，按方向键左右查看结果";
+	
+	outtextxy(200, 600, s);
+
+	for (vector<Pos>::iterator iter = wall_pos.begin(); iter != wall_pos.end(); iter++)
+	{
+		putimage(box_width * (*iter).y, box_width * (*iter).x, box_width, box_width, &wall, 0, 0);
+	}
+	for (vector<Pos>::iterator iter = des_pos.begin(); iter != des_pos.end(); iter++)
+	{
+		putimage(box_width * (*iter).y, box_width * (*iter).x, box_width, box_width, &des, -16, -16);
+	}
+	for (vector<Pos>::iterator iter = searched[i].box.begin(); iter != searched[i].box.end(); iter++)
+	{
+		putimage(box_width * (*iter).y, box_width * (*iter).x, box_width, box_width, &box, 0, 0);
+	}
+	putimage(box_width * searched[i].player.y, box_width * searched[i].player.x, box_width, box_width, &player, -16, 0);
+
+	switch (searched[i].from_action)
+	{
+	case 0:
+		outtextxy(600, 200, _T("上"));
+		break;
+	case 1:
+		outtextxy(600, 200, _T("下"));
+		break;
+	case 2:
+		outtextxy(600, 200, _T("左"));
+		break;
+	case 3:
+		outtextxy(600, 200, _T("右"));
+		break;
+	default:
+		break;
+	}
+
+
+	//wchar_t s[] = L"看好了我只示范一次 (•̀ᴗ• ))";
+	//outtextxy(200, 600, s);
+	// 
+	//wchar_t s[] = L"看好了我只示范一次 (•̀ᴗ• ))";
+	//outtextxy(200, 600, s);
+
+	wchar_t s1[] = L"made by zy";
+	outtextxy(700, 780, s1);
+}
 void get_pos(int direction, Pos& pos) {
 	switch (direction)
 	{
@@ -195,9 +245,8 @@ vector<State> move(State* state_p) {
 
 int main()
 {
-	int box_width = 64;
-	initgraph(800, 800);	
-	IMAGE player, wall, box, des;
+	initgraph(800, 800);
+
 	loadimage(&player, _T("./img/player.png"));
 	loadimage(&wall, _T("./img/wall.png"));
 	loadimage(&box, _T("./img/box.png"));
@@ -246,12 +295,29 @@ int main()
 				putimage(box_width*j, box_width * i, box_width, box_width, &player, -16, 0);
 				start_state.player = Pos(i, j);
 				break;
+			case 'P':
+				map_matrix[i][j] = 'P';
+				putimage(box_width * j, box_width * i, box_width, box_width, &player, -16, 0);
+				start_state.player = Pos(i, j);
+				end_state.box.push_back(Pos(i, j));
+				des_pos.push_back(Pos(i, j));
+
+				break;
+			case 'u':
+				map_matrix[i][j] = 'u';
+				putimage(box_width * j, box_width * i, box_width, box_width, &box, 0, 0);
+				start_state.box.push_back(Pos(i, j));
+				end_state.box.push_back(Pos(i, j));
+				des_pos.push_back(Pos(i, j));
+				break;
 			default:
 				break;
 			}
 		}
 	}
-
+	
+	cout << "正在求解" << endl;
+	
 	wchar_t s[] = L"正在求解";
 	outtextxy(200, 600, s);
 	wchar_t s1[] = L"made by zy";
@@ -267,8 +333,8 @@ int main()
 	while (state_p.box != end_state.box)
 	{
 
-		cout << "epoch:" << ctn << endl;
-		cout << state_p.score << endl;
+		//cout << "epoch:" << ctn << endl;
+		//cout << state_p.score << endl;
 		ctn++;
 
 		vector<State> search_list = move(&state_p);
@@ -303,46 +369,49 @@ int main()
 	}
 
 	searched.push_back(state_p);
-	stack<int> step_stack;
+	vector<int> step_list_r;
 	int index = searched.size() - 1;
 	while (index != -1)
 	{
-		step_stack.push(index);
+		step_list_r.push_back(index);
 
 		index = searched[index].from_state;
 
 	}
-	int ctn_step = 0;
 	
-	
+	//开始展示结果
+	ExMessage m;
+	int index_i = step_list_r.size() - 1;
 
-	while (!step_stack.empty())
+	while (true)
 	{
-		cleardevice();
+		draw(searched, step_list_r[index_i]);
 
-		int i = step_stack.top();
-		step_stack.pop();
-		ctn_step++;
-		for (vector<Pos>::iterator iter = wall_pos.begin(); iter != wall_pos.end(); iter++)
-		{
-			putimage(box_width* (*iter).y, box_width* (*iter).x, box_width, box_width, &wall, 0, 0);
-		}
-		for (vector<Pos>::iterator iter = des_pos.begin(); iter != des_pos.end(); iter++)
-		{
-			putimage(box_width * (*iter).y, box_width * (*iter).x, box_width, box_width, &des, -16, -16);
-		}
-		for (vector<Pos>::iterator iter = searched[i].box.begin(); iter != searched[i].box.end(); iter++)
-		{
-			putimage(box_width * (*iter).y, box_width * (*iter).x, box_width, box_width, &box, 0, 0);
-		}
-		putimage(box_width* searched[i].player.y, box_width* searched[i].player.x, box_width, box_width, &player, -16, 0);
+		// 获取一条鼠标或按键消息
+		m = getmessage(EX_KEY);
 
-		wchar_t s[] = L"看好了我只示范一次 (•̀ᴗ• ))";
-		outtextxy(200, 600, s);
-		wchar_t s1[] = L"made by zy";
-		outtextxy(700, 780, s1);
-
-		Sleep(200);
+		switch (m.message)
+		{
+		case WM_KEYDOWN:
+			if (m.vkcode == VK_ESCAPE)
+				return 0;	// 按 ESC 键退出程序
+			else if(m.vkcode == VK_RIGHT)
+			{
+				int tmp = index_i - 1;
+				if (tmp >=0)
+				{
+					index_i = tmp;
+				}
+			}
+			else if (m.vkcode == VK_LEFT)
+			{
+				int tmp = index_i + 1;
+				if (tmp< step_list_r.size())
+				{
+					index_i = tmp;
+				}
+			}
+		}
 	}
 
 
